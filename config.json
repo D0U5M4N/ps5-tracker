@@ -1,0 +1,6 @@
+{
+    "telegram_token": "8807837531:AAHbp0hWBVESmptKvFd8J6SU-PR3q-_q93U",
+    "telegram_chat_id": "6049470729",
+    "alert_threshold_clp": 500000,
+    "send_daily_summary": true
+}

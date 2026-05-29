@@ -1,0 +1,54 @@
+name: PS5 Price Tracker
+
+on:
+  schedule:
+    # Ejecuta todos los días a las 9:00 AM hora Chile (UTC-3 → 12:00 UTC)
+    - cron: "0 12 * * *"
+  workflow_dispatch:    # permite ejecutar manualmente desde GitHub
+
+jobs:
+  track-prices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Crea config.json desde los Secrets de GitHub
+      - name: Create config.json
+        run: |
+          cat > config.json << EOF
+          {
+            "telegram_token": "${{ secrets.TELEGRAM_TOKEN }}",
+            "telegram_chat_id": "${{ secrets.TELEGRAM_CHAT_ID }}",
+            "alert_threshold_clp": 500000,
+            "send_daily_summary": true
+          }
+          EOF
+
+      # Restaura el historial de precios guardado en caché
+      - name: Restore price history
+        uses: actions/cache@v4
+        with:
+          path: price_history.json
+          key: price-history-${{ github.run_id }}
+          restore-keys: |
+            price-history-
+
+      - name: Run tracker
+        run: python ps5_tracker.py
+
+      # Guarda el historial actualizado en caché
+      - name: Save price history
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: price_history.json
+          key: price-history-${{ github.run_id }}

@@ -10,11 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Verificar archivos
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Debug - listar archivos
         run: |
-          echo "Directorio actual: $(pwd)"
-          echo "Archivos presentes:"
+          echo "PWD: $(pwd)"
           ls -la
 
       - uses: actions/setup-python@v5

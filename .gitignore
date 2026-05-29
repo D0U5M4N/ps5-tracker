@@ -1,0 +1,6 @@
+﻿venv/
+tracker.log
+price_history.json
+config.json
+__pycache__/
+*.pyc

@@ -11,6 +11,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Verificar archivos
+        run: |
+          echo "Directorio actual: $(pwd)"
+          echo "Archivos presentes:"
+          ls -la
 
       - uses: actions/setup-python@v5
         with:

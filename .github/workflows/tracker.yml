@@ -2,22 +2,17 @@ name: PS5 Price Tracker
 
 on:
   schedule:
-    - cron: "0 12 * * *"   # 9:00 AM Chile (UTC-3)
-  workflow_dispatch:         # ejecutar manualmente
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # silencia el warning de Node.js
+    - cron: "0 12 * * *"
+  workflow_dispatch:
 
 jobs:
   track-prices:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -25,34 +20,22 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Create config.json
+        run: python create_config.py
         env:
           TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python - <<'PYEOF'
-          import json, os
-          cfg = {
-            "telegram_token":      os.environ["TELEGRAM_TOKEN"],
-            "telegram_chat_id":    os.environ["TELEGRAM_CHAT_ID"],
-            "alert_threshold_clp": 500000,
-            "send_daily_summary":  True
-          }
-          with open("config.json", "w") as f:
-              json.dump(cfg, f)
-          print("config.json creado OK")
-          PYEOF
 
-      - name: Restore price history cache
-        uses: actions/cache@v4
+      - name: Restore price history
+        uses: actions/cache/restore@v4
         with:
           path: price_history.json
-          key: price-history-${{ github.run_id }}
-          restore-keys: price-history-
+          key: price-history
+          restore-keys: price-history
 
       - name: Run tracker
         run: python ps5_tracker.py
 
-      - name: Save price history cache
+      - name: Save price history
         if: always()
         uses: actions/cache/save@v4
         with:

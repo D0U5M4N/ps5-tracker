@@ -2,13 +2,16 @@ name: PS5 Price Tracker
 
 on:
   schedule:
-    # Ejecuta todos los días a las 9:00 AM hora Chile (UTC-3 → 12:00 UTC)
-    - cron: "0 12 * * *"
-  workflow_dispatch:    # permite ejecutar manualmente desde GitHub
+    - cron: "0 12 * * *"   # 9:00 AM Chile (UTC-3)
+  workflow_dispatch:         # ejecutar manualmente
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # silencia el warning de Node.js
 
 jobs:
   track-prices:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -21,34 +24,37 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Crea config.json desde los Secrets de GitHub
       - name: Create config.json
+        env:
+          TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          cat > config.json << EOF
-          {
-            "telegram_token": "${{ secrets.TELEGRAM_TOKEN }}",
-            "telegram_chat_id": "${{ secrets.TELEGRAM_CHAT_ID }}",
+          python - <<'PYEOF'
+          import json, os
+          cfg = {
+            "telegram_token":      os.environ["TELEGRAM_TOKEN"],
+            "telegram_chat_id":    os.environ["TELEGRAM_CHAT_ID"],
             "alert_threshold_clp": 500000,
-            "send_daily_summary": true
+            "send_daily_summary":  True
           }
-          EOF
+          with open("config.json", "w") as f:
+              json.dump(cfg, f)
+          print("config.json creado OK")
+          PYEOF
 
-      # Restaura el historial de precios guardado en caché
-      - name: Restore price history
+      - name: Restore price history cache
         uses: actions/cache@v4
         with:
           path: price_history.json
           key: price-history-${{ github.run_id }}
-          restore-keys: |
-            price-history-
+          restore-keys: price-history-
 
       - name: Run tracker
         run: python ps5_tracker.py
 
-      # Guarda el historial actualizado en caché
-      - name: Save price history
-        uses: actions/cache/save@v4
+      - name: Save price history cache
         if: always()
+        uses: actions/cache/save@v4
         with:
           path: price_history.json
           key: price-history-${{ github.run_id }}

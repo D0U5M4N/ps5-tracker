@@ -10,15 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: master
-
-      - name: Debug - listar archivos
-        run: |
-          echo "PWD: $(pwd)"
-          ls -la
 
       - uses: actions/setup-python@v5
         with:
@@ -30,7 +24,7 @@ jobs:
       - name: Create config.json
         run: python create_config.py
         env:
-          TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
       - name: Restore price history
